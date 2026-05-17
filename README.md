@@ -1,59 +1,103 @@
-# 🤖 AELIX Autonomous Agent
+# APKManifest
 
-> *We Build. We Evolve. We Dominate.*
+Android Manifest Security Analyzer
 
-AELIX is a fully autonomous AI agent that builds real software tools every 6 hours — no human input required.
+APKManifest is a web-based static analysis tool that scans Android APK files for security misconfigurations in the AndroidManifest.xml. Each finding is mapped to its OWASP MASVS control with a severity level and a recommended fix.
 
-## What AELIX Does
+---
 
-Every 6 hours, AELIX automatically:
+## Security checks
 
-1. 🧠 **THINKS** — Generates a unique project idea
-2. 📋 **PLANS** — Designs the architecture
-3. 💻 **CODES** — Writes production-quality code
-4. 🚀 **DEPLOYS** — Creates a GitHub repo and uploads everything
-5. 🔄 **EVOLVES** — Remembers what it built and improves
+| Check | MASVS Control | Severity |
+|-------|--------------|----------|
+| Dangerous permissions | MASVS-PLATFORM-2 | Low / Medium / Critical |
+| android:debuggable="true" | MASVS-RESILIENCE-2 | Critical |
+| android:allowBackup="true" | MASVS-STORAGE-1 | Medium |
+| android:usesCleartextTraffic="true" | MASVS-NETWORK-1 | Critical |
+| Exported components without permission | MASVS-PLATFORM-1 | Medium |
 
-## Setup (One Time Only)
+---
 
-### 1. Add Secrets to this Repository
+## Features
 
-Go to: `Settings → Secrets and variables → Actions`
+- Security Score Card — instant PASS / FAIL per category
+- Remediation Priority — findings sorted by severity with a one-line fix
+- OWASP Mobile Top 10 Coverage — 5 / 10 categories covered via manifest analysis
+- Compare two APKs — detect which issues were fixed between two versions
+- PDF Report — downloadable report with all findings, MASVS IDs, and fixes
+- Risk Score — weighted 0–100 score (Critical x25, Medium x10, Low x3)
 
-Add these secrets:
+---
 
-| Secret | Value |
-|--------|-------|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key (sk-ant-...) |
-| `GH_TOKEN` | Your GitHub Personal Access Token |
+## Installation
 
-### 2. Enable GitHub Actions
+Requirements: Python 3.8 or higher
 
-Go to: `Actions → Enable workflows`
+```bash
+git clone https://github.com/Ali-1a/apkmanifest.git
+cd apkmanifest
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python3 app.py
+```
 
-### 3. Done! 🎉
+Open http://localhost:7777 in your browser.
 
-AELIX will now run automatically every 6 hours.
-You can also trigger it manually from the Actions tab.
+---
 
-## Projects Built by AELIX
-
-Check `memory/state.json` to see all projects AELIX has built.
-
-## Architecture
+## Project structure
 
 ```
-aelix-autonomous/
-├── .github/
-│   └── workflows/
-│       └── aelix.yml      # Runs every 6 hours
-├── agent/
-│   └── core.py            # AELIX brain
-├── memory/
-│   └── state.json         # What AELIX remembers
-└── README.md
+apkmanifest/
+├── app.py                     # Flask web server and routes
+├── requirements.txt
+├── analyzer/
+│   ├── manifest_checker.py    # 5 security checks with MASVS mapping
+│   ├── risk_scorer.py         # Weighted 0-100 scoring
+│   ├── reporter.py            # PDF report generation
+│   └── scanner.py             # Main orchestrator
+├── templates/
+│   ├── base.html
+│   ├── index.html
+│   ├── results.html
+│   ├── compare.html
+│   ├── compare_results.html
+│   ├── about.html
+│   └── error.html
+└── static/
+    ├── css/style.css
+    └── js/upload.js
 ```
 
 ---
 
-Built by **AELIX AI** — The Last Tech Company You'll Ever Need.
+## Risk levels
+
+| Score | Level |
+|-------|-------|
+| 75 – 100 | Critical |
+| 50 – 74 | High |
+| 25 – 49 | Medium |
+| 1 – 24 | Low |
+| 0 | Minimal |
+
+---
+
+## Limitations
+
+APKManifest analyzes AndroidManifest.xml only. It does not inspect source code, compiled bytecode, or runtime behavior. All findings should be verified manually before action is taken.
+
+---
+
+## Team
+
+Ali AL-RIKABI · Wassim JABER
+
+SMD Mobile Security Project · POLITEHNICA București · 2026
+
+---
+
+## License
+
+MIT License
