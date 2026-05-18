@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Comparison Results — APKManifest{% endblock %}
+{% block content %}
+
+<section class="results-header">
+    <a href="{{ url_for('compare') }}" class="back-link">← Compare another pair</a>
+    <a href="{{ url_for('index') }}" class="btn-download">New scan</a>
+</section>
+
+<section class="compare-header-section">
+    <h1>Security Comparison</h1>
+    <p class="compare-subtitle">
+        {{ r1.basic_info.app_name }} — {{ r1.original_filename }} vs {{ r2.original_filename }}
+    </p>
+</section>
+
+<section class="compare-score-section">
+    <div class="compare-score-card risk-{{ r1.risk_level|lower }}">
+        <p class="compare-score-file">{{ r1.original_filename }}</p>
+        <div class="compare-score-number">{{ comparison.score1 }}</div>
+        <div class="compare-score-label">/ 100 — {{ r1.risk_level }}</div>
+        <div class="compare-findings-count">{{ r1.summary.total }} finding{{ 's' if r1.summary.total != 1 else '' }}</div>
+    </div>
+
+    <div class="compare-arrow {% if comparison.improved %}compare-arrow-good{% elif comparison.worsened %}compare-arrow-bad{% else %}compare-arrow-neutral{% endif %}">
+        {% if comparison.improved %}
+            -{{ comparison.score_diff | abs }} pts
+        {% elif comparison.worsened %}
+            +{{ comparison.score_diff }} pts
+        {% else %}
+            No change
+        {% endif %}
+    </div>
+
+    <div class="compare-score-card risk-{{ r2.risk_level|lower }}">
+        <p class="compare-score-file">{{ r2.original_filename }}</p>
+        <div class="compare-score-number">{{ comparison.score2 }}</div>
+        <div class="compare-score-label">/ 100 — {{ r2.risk_level }}</div>
+        <div class="compare-findings-count">{{ r2.summary.total }} finding{{ 's' if r2.summary.total != 1 else '' }}</div>
+    </div>
+</section>
+
+<section class="compare-summary-section">
+    <div class="compare-summary-card compare-fixed">
+        <div class="compare-summary-number">{{ comparison.fixed_count }}</div>
+        <div class="compare-summary-label">Fixed</div>
+    </div>
+    <div class="compare-summary-card compare-new">
+        <div class="compare-summary-number">{{ comparison.new_count }}</div>
+        <div class="compare-summary-label">New issues</div>
+    </div>
+    <div class="compare-summary-card compare-common">
+        <div class="compare-summary-number">{{ comparison.common_count }}</div>
+        <div class="compare-summary-label">Remaining</div>
+    </div>
+</section>
+
+{% if comparison.fixed_count > 0 %}
+<section class="compare-details-section">
+    <h2 class="compare-fixed-title">Fixed issues</h2>
+    {% for finding in r1.findings if finding.id in comparison.fixed_ids %}
+    <div class="compare-finding compare-finding-fixed">
+        <span class="severity-badge severity-badge-{{ finding.severity }}">{{ finding.severity | upper }}</span>
+        <strong>{{ finding.title }}</strong>
+        <span class="compare-finding-status">Fixed in v2</span>
+    </div>
+    {% endfor %}
+</section>
+{% endif %}
+
+{% if comparison.new_count > 0 %}
+<section class="compare-details-section">
+    <h2 class="compare-new-title">New issues in v2</h2>
+    {% for finding in r2.findings if finding.id in comparison.new_ids %}
+    <div class="compare-finding compare-finding-new">
+        <span class="severity-badge severity-badge-{{ finding.severity }}">{{ finding.severity | upper }}</span>
+        <strong>{{ finding.title }}</strong>
+        <span class="compare-finding-status">New in v2</span>
+    </div>
+    {% endfor %}
+</section>
+{% endif %}
+
+{% if comparison.common_count > 0 %}
+<section class="compare-details-section">
+    <h2>Remaining issues</h2>
+    {% for finding in r1.findings if finding.id in comparison.common_ids|default([]) or finding.id not in comparison.fixed_ids %}
+    {% if finding.id not in comparison.fixed_ids %}
+    <div class="compare-finding compare-finding-common">
+        <span class="severity-badge severity-badge-{{ finding.severity }}">{{ finding.severity | upper }}</span>
+        <strong>{{ finding.title }}</strong>
+        <span class="compare-finding-status">Still present</span>
+    </div>
+    {% endif %}
+    {% endfor %}
+</section>
+{% endif %}
+
+<section class="compare-full-section">
+    <div class="compare-full-col">
+        <h2>{{ r1.original_filename }}</h2>
+        <a href="{{ url_for('download_report', scan_id=r1.scan_id) }}" class="btn-download">Download PDF</a>
+        <a href="{{ url_for('view_report', scan_id=r1.scan_id) }}" class="btn-secondary">View full report</a>
+    </div>
+    <div class="compare-full-col">
+        <h2>{{ r2.original_filename }}</h2>
+        <a href="{{ url_for('download_report', scan_id=r2.scan_id) }}" class="btn-download">Download PDF</a>
+        <a href="{{ url_for('view_report', scan_id=r2.scan_id) }}" class="btn-secondary">View full report</a>
+    </div>
+</section>
+
+{% endblock %}

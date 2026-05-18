@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}About — APKManifest{% endblock %}
+
+{% block content %}
+<section class="about-section">
+    <h1>About APKManifest</h1>
+
+    <p>
+        APKManifest is a static analysis tool for Android applications developed as part of the
+        SMD Mobile Security course project at POLITEHNICA București. It analyzes the
+        AndroidManifest.xml file inside an APK and detects common security misconfigurations.
+    </p>
+
+    <h2>How it works</h2>
+    <p>
+        The tool opens the APK file using
+        <a href="https://github.com/androguard/androguard" target="_blank" rel="noopener">androguard</a>
+        and extracts the AndroidManifest.xml. It then runs five security checks on the manifest
+        and maps each finding to its corresponding
+        <a href="https://mas.owasp.org/MASVS/" target="_blank" rel="noopener">OWASP MASVS</a>
+        control, assigns a severity level, and provides a recommended fix.
+        A risk score from 0 to 100 is calculated based on the findings.
+    </p>
+
+    <h2>What it checks</h2>
+    <ul class="coverage-list">
+        <li><strong>Dangerous permissions</strong> — permissions classified as dangerous by the Android official documentation, requiring explicit user approval</li>
+        <li><strong>Debuggable flag</strong> — android:debuggable="true" allows ADB debugger attachment in production builds (MASVS-RESILIENCE-2)</li>
+        <li><strong>Backup flag</strong> — android:allowBackup="true" allows ADB extraction of private app data (MASVS-STORAGE-1)</li>
+        <li><strong>Cleartext traffic</strong> — android:usesCleartextTraffic="true" permits unencrypted HTTP connections (MASVS-NETWORK-1)</li>
+        <li><strong>Exported components</strong> — activities, services, and receivers exposed to other apps without permission protection (MASVS-PLATFORM-1)</li>
+    </ul>
+
+    <h2>Limitations</h2>
+    <p>
+        APKManifest analyzes the AndroidManifest.xml only. It does not analyze application
+        source code, compiled bytecode, or runtime behavior. Vulnerabilities inside the
+        application logic — such as hardcoded secrets, SQL injection, or insecure cryptography
+        — are outside the scope of this tool. All findings should be verified manually
+        before action is taken.
+    </p>
+
+    <h2>Tech stack</h2>
+    <p>Python · Flask · androguard · ReportLab · HTML/CSS</p>
+
+    
+</section>
+{% endblock %}

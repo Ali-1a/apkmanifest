@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Scan Results — {{ data.basic_info.app_name }}{% endblock %}
+
+{% block content %}
+<section class="results-header">
+    <a href="{{ url_for('index') }}" class="back-link">← Scan another APK</a>
+    <div class="results-actions">
+        
+        <a href="{{ url_for('download_report', scan_id=data.scan_id) }}" class="btn-download">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download PDF
+        </a>
+    </div>
+</section>
+
+
+
+<section class="app-card">
+    <div class="app-icon-placeholder">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+            <line x1="12" y1="18" x2="12.01" y2="18"/>
+        </svg>
+    </div>
+    <div class="app-info">
+        <h1 class="app-name">{{ data.basic_info.app_name }}</h1>
+        <p class="app-package">{{ data.basic_info.package_name }}</p>
+        <div class="app-meta">
+            <span>v{{ data.basic_info.version_name }}</span>
+            <span>·</span>
+            <span>{{ data.basic_info.file_size_mb }} MB</span>
+            <span>·</span>
+            <span>SDK {{ data.basic_info.min_sdk }}–{{ data.basic_info.target_sdk }}</span>
+        </div>
+    </div>
+</section>
+
+<section class="risk-banner risk-{{ data.risk_level|lower }}">
+    <div class="risk-score-circle">
+        <span class="risk-score-number">{{ data.risk_score }}</span>
+        <span class="risk-score-max">/ 100</span>
+    </div>
+    <div class="risk-info">
+        <p class="risk-label">Risk Score</p>
+        <h2 class="risk-level">{{ data.risk_level }} Risk</h2>
+        <p class="risk-message">
+            {% if data.summary.total == 0 %}
+                No security issues detected in this APK.
+            {% else %}
+                {{ data.summary.total }} issue{{ 's' if data.summary.total != 1 else '' }} detected — review the findings below.
+            {% endif %}
+        </p>
+    </div>
+</section>
+
+<section class="severity-grid">
+    <div class="severity-card severity-critical">
+        <span class="severity-count">{{ data.summary.critical }}</span>
+        <span class="severity-label">Critical</span>
+    </div>
+    <div class="severity-card severity-medium">
+        <span class="severity-count">{{ data.summary.medium }}</span>
+        <span class="severity-label">Medium</span>
+    </div>
+    <div class="severity-card severity-low">
+        <span class="severity-count">{{ data.summary.low }}</span>
+        <span class="severity-label">Low</span>
+    </div>
+    <div class="severity-card severity-perms">
+        <span class="severity-count">{{ data.permissions.total }}</span>
+        <span class="severity-label">Permissions</span>
+    </div>
+</section>
+
+{# ── SECURITY SCORE CARD ── #}
+{% if data.findings %}
+<section class="score-card-section">
+    <h2>Security Score Card</h2>
+    <div class="score-card">
+        {% set perm_findings = data.findings | selectattr('category', 'equalto', 'Permissions') | list %}
+        {% set man_findings = data.findings | selectattr('category', 'equalto', 'Manifest') | list %}
+        {% set net_findings = data.findings | selectattr('category', 'equalto', 'Network') | list %}
+        {% set comp_findings = data.findings | selectattr('category', 'equalto', 'Components') | list %}
+        {% set sdk_findings = data.findings | selectattr('category', 'equalto', 'Configuration') | list %}
+
+        {% for cat_name, cat_findings in [
+            ('Permissions', perm_findings),
+            ('Manifest', man_findings),
+            ('Network', net_findings),
+            ('Components', comp_findings),
+            ('Configuration', sdk_findings)
+        ] %}
+            {% set has_critical = cat_findings | selectattr('severity', 'equalto', 'critical') | list | length > 0 %}
+            {% set has_medium = cat_findings | selectattr('severity', 'equalto', 'medium') | list | length > 0 %}
+            {% set has_low = cat_findings | selectattr('severity', 'equalto', 'low') | list | length > 0 %}
+            {% set status = 'critical' if has_critical else ('medium' if has_medium else ('low' if has_low else 'pass')) %}
+            <div class="score-card-item score-card-{{ status }}">
+                <div class="score-card-name">{{ cat_name }}</div>
+                <div class="score-card-status">{{ 'FAIL' if status != 'pass' else 'PASS' }}</div>
+                <div class="score-card-severity">{{ status | upper if status != 'pass' else 'SECURE' }}</div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+{# ── REMEDIATION PRIORITY ── #}
+<section class="remediation-section">
+    <h2>Remediation Priority</h2>
+    <p class="remediation-intro">Fix these issues in order of severity to reduce your risk score.</p>
+    <div class="remediation-list">
+        {% set critical_findings = data.findings | selectattr('severity', 'equalto', 'critical') | list %}
+        {% set medium_findings = data.findings | selectattr('severity', 'equalto', 'medium') | list %}
+        {% set low_findings = data.findings | selectattr('severity', 'equalto', 'low') | list %}
+        {% set ordered = critical_findings + medium_findings + low_findings %}
+        {% for finding in ordered %}
+        <div class="remediation-item remediation-{{ finding.severity }}">
+            <div class="remediation-rank">{{ loop.index }}</div>
+            <div class="remediation-content">
+                <div class="remediation-header">
+                    <span class="severity-badge severity-badge-{{ finding.severity }}">{{ finding.severity | upper }}</span>
+                    <strong>{{ finding.title }}</strong>
+                </div>
+                {% if finding.fix %}
+                <p class="remediation-fix">{{ finding.fix }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{# ── FINDINGS ── #}
+<section class="findings-section">
+    <h2>Detailed Findings</h2>
+
+    {% if data.findings %}
+        {% for finding in data.findings %}
+        <article class="finding finding-{{ finding.severity }}">
+            <div class="finding-header">
+                <div class="finding-title-row">
+                    <span class="finding-id">{{ finding.id }}</span>
+                    <h3 class="finding-title">{{ finding.title }}</h3>
+                </div>
+                <span class="severity-badge severity-badge-{{ finding.severity }}">
+                    {{ finding.severity|upper }}
+                </span>
+            </div>
+            <p class="finding-description">{{ finding.description }}</p>
+            <div class="finding-meta">
+                <span class="meta-item"><strong>Category:</strong> {{ finding.category }}</span>
+                <span class="meta-item"><strong>OWASP:</strong> {{ finding.owasp }}</span>
+                {% if finding.masvs %}
+                <span class="meta-item">
+                    <strong>MASVS:</strong>
+                    <a href="{{ finding.masvs_url }}" target="_blank" rel="noopener" style="color: var(--color-primary);">{{ finding.masvs }}</a>
+                </span>
+                {% endif %}
+                {% if finding.confidence %}
+                <span class="meta-item">
+                    <strong>Confidence:</strong> {{ finding.confidence }}
+                </span>
+                {% endif %}
+            </div>
+            {% if finding.fix %}
+            <div class="finding-fix">
+                <strong>Recommended fix:</strong> {{ finding.fix }}
+            </div>
+            {% endif %}
+            {% if finding.details %}
+            <div class="finding-details">
+                <strong>Details:</strong>
+                <ul>
+                    {% for detail in finding.details[:5] %}
+                    <li><code>{{ detail }}</code></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </article>
+        {% endfor %}
+    {% else %}
+        <div class="no-findings">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <h3>No issues detected</h3>
+            <p>The static analysis did not find security misconfigurations in this APK.</p>
+        </div>
+    {% endif %}
+</section>
+
+{# ── OWASP MOBILE TOP 10 COVERAGE ── #}
+<section class="owasp-coverage-section">
+    <h2>OWASP Mobile Top 10 Coverage</h2>
+    <p class="owasp-coverage-intro">APKManifest covers the following OWASP Mobile Top 10 categories through manifest analysis.</p>
+    <div class="owasp-grid">
+        {% set owasp_map = [
+            ('M1', 'Improper Platform Usage', true),
+            ('M2', 'Insecure Data Storage', true),
+            ('M3', 'Insecure Communication', true),
+            ('M4', 'Insecure Authentication', false),
+            ('M5', 'Insufficient Cryptography', false),
+            ('M6', 'Insecure Authorization', false),
+            ('M7', 'Client Code Quality', false),
+            ('M8', 'Code Tampering', false),
+            ('M9', 'Reverse Engineering', true),
+            ('M10', 'Extraneous Functionality', true),
+        ] %}
+        {% for code, name, covered in owasp_map %}
+        <div class="owasp-item {{ 'owasp-covered' if covered else 'owasp-not-covered' }}">
+            <span class="owasp-code">{{ code }}</span>
+            <span class="owasp-name">{{ name }}</span>
+            <span class="owasp-status">{{ 'Covered' if covered else 'Out of scope' }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    <p class="owasp-note">5 / 10 OWASP Mobile Top 10 categories covered via AndroidManifest.xml analysis.</p>
+</section>
+
+{% if data.permissions.dangerous %}
+<section class="permissions-section">
+    <h2>Dangerous Permissions ({{ data.permissions.dangerous|length }})</h2>
+    <div class="permissions-grid">
+        {% for perm in data.permissions.dangerous %}
+        <div class="permission-item">
+            <code class="perm-name">{{ perm.permission.split('.')[-1] }}</code>
+            <span class="perm-desc">{{ perm.description }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Compare APKs — APKManifest{% endblock %}
+{% block content %}
+<section class="hero">
+    <h1 class="hero-title">Compare two APK versions</h1>
+    <p class="hero-subtitle">Upload two versions of the same app to see which security issues were fixed and which remain.</p>
+</section>
+
+<section class="upload-card">
+    <form action="{{ url_for('compare_scan') }}" method="POST" enctype="multipart/form-data" id="compare-form">
+        <div class="compare-upload-grid">
+            <div class="compare-slot">
+                <p class="compare-slot-label">Version 1 (older)</p>
+                <div class="dropzone compare-dropzone" id="dropzone-1">
+                    <div class="dropzone-content" id="content-1">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <p class="dropzone-subtitle">Drop APK or</p>
+                        <label for="apk_file_1" class="btn-browse">Browse</label>
+                        <input type="file" id="apk_file_1" name="apk_file_1" accept=".apk" required style="display:none;">
+                    </div>
+                    <div class="dropzone-selected" id="selected-1" style="display:none;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <p class="selected-name" id="name-1"></p>
+                        <p class="selected-size" id="size-1"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="compare-vs">VS</div>
+            <div class="compare-slot">
+                <p class="compare-slot-label">Version 2 (newer)</p>
+                <div class="dropzone compare-dropzone" id="dropzone-2">
+                    <div class="dropzone-content" id="content-2">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <p class="dropzone-subtitle">Drop APK or</p>
+                        <label for="apk_file_2" class="btn-browse">Browse</label>
+                        <input type="file" id="apk_file_2" name="apk_file_2" accept=".apk" required style="display:none;">
+                    </div>
+                    <div class="dropzone-selected" id="selected-2" style="display:none;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <p class="selected-name" id="name-2"></p>
+                        <p class="selected-size" id="size-2"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn-primary" id="compare-btn" disabled>Compare</button>
+    </form>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    function fmt(b) { return b < 1048576 ? (b/1024).toFixed(1)+" KB" : (b/1048576).toFixed(2)+" MB"; }
+    var ready = [false, false];
+    function checkReady() { document.getElementById("compare-btn").disabled = !(ready[0] && ready[1]); }
+    [1,2].forEach(function(n) {
+        var inp = document.getElementById("apk_file_"+n);
+        var content = document.getElementById("content-"+n);
+        var sel = document.getElementById("selected-"+n);
+        inp.addEventListener("change", function() {
+            if (inp.files && inp.files[0]) {
+                content.style.display = "none";
+                sel.style.display = "block";
+                document.getElementById("name-"+n).textContent = inp.files[0].name;
+                document.getElementById("size-"+n).textContent = fmt(inp.files[0].size);
+                ready[n-1] = true;
+                checkReady();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
