@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "uploads"
 REPORTS_DIR = BASE_DIR / "reports"
 ALLOWED_EXTENSIONS = {"apk"}
-MAX_FILE_SIZE_MB = 100
+MAX_FILE_SIZE_MB = 600
 
 UPLOAD_DIR.mkdir(exist_ok=True)
 REPORTS_DIR.mkdir(exist_ok=True)
